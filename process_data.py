@@ -21,9 +21,9 @@ for file in os.listdir(directory):
     text_filename = os.fsencode(file)
     text_filename = text_filename.decode("utf-8")
     print("On filename: {}".format(text_filename))
-    label_dict[text_filename[:-5]] = label_index
 
     if text_filename.endswith(".html"):
+        label_dict[text_filename[:-5]] = label_index
         FILE_PATH = PATH + text_filename
         with open(FILE_PATH, 'r', encoding='utf-8') as fp:
             data = fp.read().replace('\n', '')
@@ -48,6 +48,8 @@ for file in os.listdir(directory):
                     label_geo_data.append(np.array([label_index, country, int(income)]))
             label_index += 1
         except KeyError:
+            print("KeyError")
+            label_index += 1
             continue
 
 
