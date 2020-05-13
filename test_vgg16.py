@@ -179,7 +179,10 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
         # Validating
         with torch.no_grad():
+
+            was_training = model.training
             model.eval()
+
             print("Validating Epoch {}".format(epoch))
             for x_val, y_val in val_loader:
                 x_val = x_val.to(device)
@@ -206,6 +209,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                     else:
                         incorrect_labels_top1.append(y_val[i])
                         incorrect_labels_top5.append(y_val[i])
+
+            if was_training: #back to training
+                model.train()
 
         train_loss = train_loss / len(train_loader.dataset)
         val_loss = val_loss / len(val_loader.dataset)
