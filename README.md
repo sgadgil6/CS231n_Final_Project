@@ -1,7 +1,6 @@
-CS231n Final Project
+CS231n Final Project - Domain Adaptation for Geography Agnostic Models
 
-Data is available at: https://drive.google.com/open?id=19ZRP6egQ4fHHX9ZFGslTLyD6R_zGlE7s
-
+The Dollar Street Dataset is available at: https://drive.google.com/open?id=19ZRP6egQ4fHHX9ZFGslTLyD6R_zGlE7s
 
 Following are the files:
 
