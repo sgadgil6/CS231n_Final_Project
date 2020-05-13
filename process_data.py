@@ -23,7 +23,7 @@ for file in os.listdir(directory):
     print("On filename: {}".format(text_filename))
 
     if text_filename.endswith(".html"):
-        label_dict[text_filename[:-5]] = label_index
+        label_dict[text_filename[:-5]] = label_index #{label_name -> label_idx}
         FILE_PATH = PATH + text_filename
         with open(FILE_PATH, 'r', encoding='utf-8') as fp:
             data = fp.read().replace('\n', '')
@@ -45,7 +45,7 @@ for file in os.listdir(directory):
                     resized_image = cv2.resize(cv2.imread('temp.jpg'), (224, 224))
                     resized_image_rgb = (cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB))
                     image_data.append(resized_image_rgb)
-                    label_geo_data.append(np.array([label_index, country, int(income)]))
+                    label_geo_data.append(np.array([label_index, country, int(income)])) #size -> # of images
             label_index += 1
         except KeyError:
             print("KeyError")
