@@ -216,9 +216,15 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                 y_val = y_val.to(device)
 
                 labels = y_val[:, 0]
-                output = model(x_val)
                 labels = labels.long()
-                loss = criterion(output, labels)
+                income = y_train[:, 2]  # shape (128)
+
+                output = model(x_val)
+
+                loss = criterion(output, labels)  # shape (N)
+                loss /= income  # reweighting the loss by income
+                loss = loss.sum()
+
                 val_loss += loss.item() * x_val.size(0)
 
                 _, pred_top5 = output.topk(k=5, dim=1)
