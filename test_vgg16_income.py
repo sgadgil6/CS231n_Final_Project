@@ -140,7 +140,7 @@ print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 
 #SS: changing NLLLoss to CrossEntropyLoss
 # criterion = nn.NLLLoss()
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(reduction='none')
 
 optimizer = optim.Adam(vgg16_model.parameters(), lr=5e-4, weight_decay=1e-3)
 
@@ -186,10 +186,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
             output = model(x_train) #output shape (128, 131), num_classes = 131 batch_size=128
 
-            #weight the above loss by income - y_train[:, 2] and then apply crossentropy loss
+            loss = criterion(output, labels) #shape (N)
             income = income.view(-1,1) #column vector shape (128,1)
-            income_weighted_output = output/income #reweighting the per-datapoint class scores by per-datapoint income
-            loss = criterion(income_weighted_output, labels)
+            loss /= income #reweighting the loss by income
 
             loss.backward()
             optimizer.step()
