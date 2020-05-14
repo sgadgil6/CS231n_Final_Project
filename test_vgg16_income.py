@@ -187,13 +187,6 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
             output = model(x_train) #output shape (128, 131), num_classes = 131 batch_size=128
 
             loss = criterion(output, labels) #shape (N)
-            print(loss.shape)
-
-            income = income.view(-1,1) #column vector shape (128,1)
-            print(income.shape)
-
-            exit()
-
             loss /= income #reweighting the loss by income
 
             loss = loss.sum()
