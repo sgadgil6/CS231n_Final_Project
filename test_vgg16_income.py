@@ -105,7 +105,7 @@ def get_pretrianed_model(model_name, num_classes):
         #moving to crossentropy loss hence removing the last LogSoftmax layer
         model.fc = nn.Sequential(nn.Linear(n_inputs, 256),
                                             nn.ReLU(),
-                                            nn.Dropout(0.5),
+                                            nn.Dropout(0.2), #changed dropout from 0.5 to 0.2
                                             nn.Linear(256, num_classes))
 
         model = model.to(device)
@@ -142,8 +142,8 @@ print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 # criterion = nn.NLLLoss()
 criterion = nn.CrossEntropyLoss(reduction='none')
 
-optimizer = optim.Adam(vgg16_model.parameters(), lr=5e-4, weight_decay=1e-3)
-
+# optimizer = optim.Adam(vgg16_model.parameters(), lr=5e-4, weight_decay=1e-3)
+optimizer = optim.Adam(vgg16_model.parameters())
 
 def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, print_every=2):
     max_train_acc = 0
@@ -188,7 +188,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
             loss = criterion(output, labels) #shape (N)
             loss /= income #reweighting the loss by income
-
+            loss*=income.mean() #multiplying by average income too
             loss = loss.sum()
 
             loss.backward()
@@ -277,4 +277,6 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 
 
-history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(vgg16_model, criterion, optimizer, dataloaders['train'], dataloaders['test'])
+# history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(vgg16_model, criterion, optimizer, dataloaders['train'], dataloaders['test'])
+#resnet model
+history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(resnet_model, criterion, optimizer, dataloaders['train'], dataloaders['test'])
