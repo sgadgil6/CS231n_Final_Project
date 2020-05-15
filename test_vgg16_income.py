@@ -183,6 +183,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
             labels = y_train[:, 0] #shape (128)
             labels = labels.long()
             income = y_train[:, 2] #shape (128)
+            income = income.float()
 
             output = model(x_train) #output shape (128, 131), num_classes = 131 batch_size=128
 
