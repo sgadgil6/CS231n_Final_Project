@@ -189,7 +189,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
             loss = criterion(output, labels) #shape (N)
             loss /= income #reweighting the loss by income
-            loss*=income.mean() #multiplying by average income too
+            # loss*=income.mean() #multiplying by average income too
             loss = loss.sum()
 
             loss.backward()
