@@ -261,8 +261,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
         # If we get better val accuracy, save the labels for analysis
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(DATA_DIR, "correct_labels_top5.npy"), correct_labels_top5)
-            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5.npy"), incorrect_labels_top5)
+            np.save(os.path.join(DATA_DIR, "correct_labels_top5_income.npy"), correct_labels_top5)
+            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_income.npy"), incorrect_labels_top5)
 
         if (epoch + 1) % print_every == 0:
             print(
@@ -275,7 +275,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                                                  val_acc_top5))
 
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
-        np.save(os.path.join(DATA_DIR, "history.npy"), history)
+        np.save(os.path.join(DATA_DIR, "history_income.npy"), history)
 
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-history = np.load("./data/history_vgg16.npy")
+history = np.load("./data/history_income.npy")
 print(history.shape)
 train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5 = history.T
 
@@ -29,4 +29,5 @@ plt.ylabel("Acc")
 plt.title("Val Acc Top 5")
 plt.subplots_adjust(wspace=0.4, hspace=0.4)
 plt.suptitle("VGG-16 Curves")
-plt.show()
+plt.savefig('income_loss_history_resnet.png', format='png')
+# plt.show()
