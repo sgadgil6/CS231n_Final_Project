@@ -5,8 +5,8 @@ import copy
 # correct_labels_top5 = np.load("./data/correct_labels_top5_vgg16.npy")
 # incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_vgg16.npy")
 
-correct_labels_top5 = np.load("./data/correct_labels_top5_income.npy")
-incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_income.npy")
+correct_labels_top5 = np.load("./data/correct_labels_top5_income.npy", allow_pickle=True)
+incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_income.npy", allow_pickle=True)
 
 print(len(correct_labels_top5[:, 2]))
 print(len(incorrect_labels_top5[:, 2]))

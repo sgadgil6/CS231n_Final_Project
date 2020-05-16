@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-history = np.load("./data/history_income.npy")
+history = np.load("./data/history_income.npy", allow_pickle=True)
 print(history.shape)
 train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5 = history.T
 
