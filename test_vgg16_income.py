@@ -84,7 +84,7 @@ def get_pretrianed_model(model_name, num_classes):
         #moving to crossentropy loss hence removing the last LogSoftmax layer
         model.classifier[6] = nn.Sequential(nn.Linear(n_inputs, 256),
                                             nn.ReLU(),
-                                            nn.Dropout(0.5),
+                                            nn.Dropout(0.2),
                                             nn.Linear(256, num_classes))
 
         # checking if only the last layers have require_grad=True
@@ -191,7 +191,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
             loss = criterion(output, labels) #shape (N)
             loss /= income #reweighting the loss by income
-            # loss*=income.mean() #multiplying by average income too
+            loss*=income.mean() #multiplying by average income too
             loss = loss.sum()
 
             loss.backward()
