@@ -143,7 +143,9 @@ print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 criterion = nn.CrossEntropyLoss(reduction='none')
 
 # optimizer = optim.Adam(vgg16_model.parameters(), lr=5e-4, weight_decay=1e-3)
-optimizer = optim.Adam(vgg16_model.parameters())
+# optimizer = optim.Adam(vgg16_model.parameters())
+optimizer = optim.Adam(resnet_model.parameters())
+
 
 def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, print_every=2):
     max_train_acc = 0
