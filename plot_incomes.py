@@ -5,8 +5,8 @@ import copy
 # correct_labels_top5 = np.load("./data/correct_labels_top5_vgg16.npy")
 # incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_vgg16.npy")
 
-correct_labels_top5 = np.load("./data/correct_labels_top5_income.npy", allow_pickle=True)
-incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_income.npy", allow_pickle=True)
+correct_labels_top5 = np.load("./data/correct_labels_top5_income_vgg.npy", allow_pickle=True)
+incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_income_vgg.npy", allow_pickle=True)
 
 print(len(correct_labels_top5[:, 2]))
 print(len(incorrect_labels_top5[:, 2]))
@@ -43,5 +43,5 @@ plt.plot(low_incomes[len(low_incomes)-len(ma_acc):], ma_acc)
 plt.title("Acc v/s Income")
 plt.xlabel("Income Level")
 plt.ylabel("Accuracy")
-plt.savefig(PLOT_DIR+'income_loss_resnet.png', format='png')
+plt.savefig(PLOT_DIR+'income_loss_vgg.png', format='png')
 # plt.show()
