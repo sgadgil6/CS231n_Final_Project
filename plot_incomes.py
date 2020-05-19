@@ -10,6 +10,7 @@ incorrect_labels_top5 = np.load("./data/incorrect_labels_top5_income.npy", allow
 
 print(len(correct_labels_top5[:, 2]))
 print(len(incorrect_labels_top5[:, 2]))
+PLOT_DIR = 'plots/'
 
 BUCKET_SIZE = 300
 income_buckets = [(i, i+BUCKET_SIZE) for i in range(0, 11000, BUCKET_SIZE)]
@@ -31,15 +32,16 @@ for low, high in income_buckets:
         continue
     accuracies.append(num_correct / (num_correct + num_incorrect))
 
-WINDOW_SIZE = 10
+WINDOW_SIZE = 20
 ma_acc = moving_average(accuracies, WINDOW_SIZE)
 low_incomes = [i for i, j in plot_income]
 # plt.plot([i for i, j in plot_income], accuracies)
 
 # Plot moving average
+plt. ylim(0.7,0.8)
 plt.plot(low_incomes[len(low_incomes)-len(ma_acc):], ma_acc)
 plt.title("Acc v/s Income")
 plt.xlabel("Income Level")
 plt.ylabel("Accuracy")
-plt.savefig('income_loss_resnet.png', format='png')
+plt.savefig(PLOT_DIR+'income_loss_resnet.png', format='png')
 # plt.show()
