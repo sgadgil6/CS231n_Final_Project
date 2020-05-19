@@ -84,7 +84,6 @@ def get_pretrianed_model(model_name, num_classes):
         #moving to crossentropy loss hence removing the last LogSoftmax layer
         model.classifier[6] = nn.Sequential(nn.Linear(n_inputs, 256),
                                             nn.ReLU(),
-                                            nn.Dropout(0.2),
                                             nn.Linear(256, num_classes))
 
         # checking if only the last layers have require_grad=True
@@ -105,7 +104,7 @@ def get_pretrianed_model(model_name, num_classes):
         #moving to crossentropy loss hence removing the last LogSoftmax layer
         model.fc = nn.Sequential(nn.Linear(n_inputs, 256),
                                             nn.ReLU(),
-                                            nn.Dropout(0.2), #changed dropout from 0.5 to 0.2
+                                            # nn.Dropout(0.2), #changed dropout from 0.5 to 0.2
                                             nn.Linear(256, num_classes))
 
         model = model.to(device)
@@ -142,7 +141,6 @@ print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 # criterion = nn.NLLLoss()
 criterion = nn.CrossEntropyLoss(reduction='none')
 
-# optimizer = optim.Adam(vgg16_model.parameters(), lr=5e-4, weight_decay=1e-3)
 # optimizer = optim.Adam(vgg16_model.parameters())
 optimizer = optim.Adam(resnet_model.parameters())
 
