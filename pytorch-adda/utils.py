@@ -77,11 +77,11 @@ def init_model(network_type, restore,num_classes):
     """Init models with cuda and weights."""
     # init weights of model
     if network_type == "src_encoder":
-        net = Encoder(num_classes,domain="src")
+        net = Encoder(num_classes,domain="src",name=params.srcenc_name)
     elif network_type == "src_classifier":
         net = Classifier(num_classes)
     elif network_type == "tgt_encoder":
-        net = Encoder(num_classes,domain="tgt")
+        net = Encoder(num_classes,domain="tgt",name=params.tgtenc_name)
     elif network_type == "discriminator":
         net = Discriminator(input_dims=params.d_input_dims,
                 hidden_dims=params.d_hidden_dims,

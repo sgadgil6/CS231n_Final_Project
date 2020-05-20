@@ -23,8 +23,8 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
     ################################################################
     # tensorboard configuration
     tb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'tensorboard',"adverserial")
-    if os.path.exists(tb_path):
-        shutil.rmtree(tb_path)
+    # if os.path.exists(tb_path):
+        # shutil.rmtree(tb_path)
     tb_logger = tensorboardX.SummaryWriter(log_dir=tb_path)
 
     # set train state for Dropout and BN layers
@@ -91,28 +91,28 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
             #########################################################
 
             # zero gradients for optimizer
-            if (epoch+1) <1:
-                loss_tgt=loss_discriminator
-            if (epoch+1) % 1 == 0:
-                # print("Training generator")
-                optimizer_discriminator.zero_grad()
-                optimizer_tgt.zero_grad()
+            # if (epoch+1) <1:
+                # loss_tgt=loss_discriminator
+            # if (epoch+1) % 1 == 0:
+            # print("Training generator")
+            # optimizer_discriminator.zero_grad()
+            optimizer_tgt.zero_grad()
 
-                # extract and target features
-                feat_tgt = tgt_encoder(images_tgt)
+            # extract and target features
+            feat_tgt = tgt_encoder(images_tgt)
 
-                # predict on discriminator
-                pred_tgt = discriminator(feat_tgt)
+            # predict on discriminator
+            pred_tgt = discriminator(feat_tgt)
 
-                # prepare fake labels
-                label_tgt = make_variable(torch.ones(feat_tgt.size(0)).long())
+            # prepare fake labels
+            label_tgt = make_variable(torch.ones(feat_tgt.size(0)).long())
 
-                # compute loss for target encoder
-                loss_tgt = criterion(pred_tgt, label_tgt)
-                loss_tgt.backward()
+            # compute loss for target encoder
+            loss_tgt = criterion(pred_tgt, label_tgt)
+            loss_tgt.backward()
 
-                # optimize target encoder
-                optimizer_tgt.step()
+            # optimize target encoder
+            optimizer_tgt.step()
             tb_logger.add_scalars('Adverseral Loss', {'Generator Loss' : loss_tgt.item(), 'Discriminator Loss': loss_discriminator.item()},global_step=step_)
             tb_logger.add_scalars('Disc Accuracy Loss', {'Disc Accuracy' : acc.item()},global_step=step_)
 

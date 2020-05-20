@@ -19,7 +19,7 @@ from tqdm import tqdm
 # import params
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../../data/"
-BATCH_SIZE=128
+BATCH_SIZE=64
 INCOME_THRESH = 600
 # Class to create train/test dataset to be fed into Dataloader
 class DollarStreetDataset(Dataset):
