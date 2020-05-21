@@ -120,59 +120,21 @@ def sampling(X_train, y_train):
     income_dict = {} #income range -> train data idx
     X_train_aug = []
     y_train_aug = []
-
-    for k in range(0,22):
-        income_dict.setdefault((k*500, (k*500)+499), list())
+    sample_threshold = 5000
+    income_bucket_size = 500
 
     for idx in range(0, len(X_train)):
+
         income = int(y_train[idx][2])
-        if income>=0 and income<=499:
-            income_dict[(0,499)].append(idx)
-        elif income>=500 and income<=999:
-            income_dict[(500,999)].append(idx)
-        elif income>=1000 and income<=1499:
-            income_dict[(1000,1499)].append(idx)
-        elif income>=1500 and income<=1999:
-            income_dict[(1500,1999)].append(idx)
-        elif income>=2000 and income<=2499:
-            income_dict[(2000,2499)].append(idx)
-        elif income>=2500 and income<=2999:
-            income_dict[(2500,2999)].append(idx)
-        elif income>=3000 and income<=3499:
-            income_dict[(3000,3499)].append(idx)
-        elif income>=3500 and income<=3999:
-            income_dict[(3500,3999)].append(idx)
-        elif income>=4000 and income<=4499:
-            income_dict[(4000,4499)].append(idx)
-        elif income>=4500 and income<=4999:
-            income_dict[(4500,4999)].append(idx)
-        elif income>=5000 and income<=5499:
-            income_dict[(5000,5499)].append(idx)
-        elif income>=5500 and income<=5999:
-            income_dict[(5500,5999)].append(idx)
-        elif income>=6000 and income<=6499:
-            income_dict[(6000,6499)].append(idx)
-        elif income>=6500 and income<=6999:
-            income_dict[(6500,6999)].append(idx)
-        elif income>=7000 and income<=7499:
-            income_dict[(7000,7499)].append(idx)
-        elif income>=7500 and income<=7999:
-            income_dict[(7500,7999)].append(idx)
-        elif income>=8000 and income<=8499:
-            income_dict[(8000,8499)].append(idx)
-        elif income>=8500 and income<=8999:
-            income_dict[(8500,8999)].append(idx)
-        elif income>=9000 and income<=9499:
-            income_dict[(9000,9499)].append(idx)
-        elif income>=9500 and income<=9999:
-            income_dict[(9500,9999)].append(idx)
-        elif income>=10000 and income<=10499:
-            income_dict[(10000,10499)].append(idx)
-        elif income>=10500 and income<=10999:
-            income_dict[(10500,10999)].append(idx)
+
+        for k in range(0,22):
+            if income>=k*income_bucket_size and income<=(k*income_bucket_size)+(income_bucket_size-1):
+                income_dict.setdefault((k*income_bucket_size, (k*income_bucket_size)+(income_bucket_size-1)), list())
+                income_dict[(k*income_bucket_size, (k*income_bucket_size)+(income_bucket_size-1))].append(idx)
+                break
 
     #uniform threshold = 5000 samples per 15 non-zero bins
-    sample_threshold = 5000
+
     for bucket in income_dict:
         if len(income_dict[bucket]) != 0: #only for non-zero buckets we will over/under sample
             if len(income_dict[bucket]) > sample_threshold: #we will undersample without replacement
