@@ -1,2 +1,7 @@
 *.npy
 *.zip
+*.pt
+*.pyc
+*.gz
+*ubyte
+*.edu
