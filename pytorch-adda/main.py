@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # Eval source model
     print("=== Evaluating final classifier for source domain ===")
-    eval_src(src_encoder, src_classifier, src_data_loader_eval)
+    _ = eval_src(src_encoder, src_classifier, src_data_loader_eval)
     # exit()
 
     # Train target encoder by GAN
@@ -57,11 +57,12 @@ if __name__ == '__main__':
             params.tgt_model_trained):
         print("[main.py] INFO | No trained target encoder found, beginning adverserial training..")
         tgt_encoder = train_tgt(src_encoder, tgt_encoder, discriminator,
-                                src_data_loader, tgt_data_loader)
+                                # src_data_loader, tgt_data_loader,src_classifier,tgt_data_loader_eval)
+                                src_data_loader, tgt_data_loader_eval,src_classifier,tgt_data_loader_eval)
 
     # Eval target encoder on test set of target dataset
     print("=== Evaluating classifier for encoded target domain ===")
     print(">>> source only <<<")
-    eval_src(src_encoder, src_classifier, tgt_data_loader_eval)
+    _ = eval_src(src_encoder, src_classifier, tgt_data_loader_eval)
     print(">>> domain adaption <<<")
-    eval_src(tgt_encoder, src_classifier, tgt_data_loader_eval)
+    _ = eval_src(tgt_encoder, src_classifier, tgt_data_loader_eval)

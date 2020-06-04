@@ -8,7 +8,7 @@ from torch import nn
 
 import params
 from utils import make_variable
-
+from .pretrain import eval_src
 import os
 import shutil
 import tensorboardX
@@ -16,7 +16,7 @@ import logging
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_tgt(src_encoder, tgt_encoder, discriminator,
-              src_data_loader, tgt_data_loader):
+              src_data_loader, tgt_data_loader,src_classifier,tgt_data_loader_val):
     """Train encoder for target domain."""
     ################################################################
     # 1. Setup Network #
@@ -36,10 +36,12 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
     criterion = nn.CrossEntropyLoss()
     # criterion = nn.BCELoss()
     optimizer_tgt = optim.Adam(tgt_encoder.parameters(),
-                               lr=params.c_learning_rate,
+                               # lr=params.c_learning_rate,
+                               lr=1.0,
                                betas=(params.beta1, params.beta2))
     optimizer_discriminator = optim.Adam(discriminator.parameters(),
-                                  lr=params.d_learning_rate,
+                                  # lr=params.d_learning_rate,
+                                  lr=1.0,
                                   betas=(params.beta1, params.beta2))
     len_data_loader = min(len(src_data_loader), len(tgt_data_loader))
     print("[adapt.py] INFO | Length of data loader: ",len_data_loader)
@@ -64,10 +66,10 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
             optimizer_discriminator.zero_grad()
 
             # extract and concat features
-            with torch.no_grad():
-                feat_src = src_encoder(images_src).detach()
-                feat_tgt = tgt_encoder(images_tgt).detach()
-                feat_concat = torch.cat((feat_src, feat_tgt), 0).detach()
+            # with torch.no_grad():
+            feat_src = src_encoder(images_src).detach()
+            feat_tgt = tgt_encoder(images_tgt).detach()
+            feat_concat = torch.cat((feat_src, feat_tgt), 0).detach()
             # prepare real and fake label
             label_src = make_variable(torch.ones(feat_src.size(0)).long())
             label_tgt = make_variable(torch.zeros(feat_tgt.size(0)).long())
@@ -95,7 +97,7 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
                 # loss_tgt=loss_discriminator
             # if (epoch+1) % 1 == 0:
             # print("Training generator")
-            # optimizer_discriminator.zero_grad()
+            optimizer_discriminator.zero_grad()
             optimizer_tgt.zero_grad()
 
             # extract and target features
@@ -113,8 +115,8 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
 
             # optimize target encoder
             optimizer_tgt.step()
-            tb_logger.add_scalars('Adverseral Loss', {'Generator Loss' : loss_tgt.item(), 'Discriminator Loss': loss_discriminator.item()},global_step=step_)
-            tb_logger.add_scalars('Disc Accuracy Loss', {'Disc Accuracy' : acc.item()},global_step=step_)
+            tb_logger.add_scalars('Adverserial Loss', {'Generator Loss' : loss_tgt.item(), 'Discriminator Loss': loss_discriminator.item()},global_step=step_)
+            tb_logger.add_scalars('Discriminator Accuracy', {'Disc Accuracy' : acc.item()},global_step=step_)
 
             ###########################################################
             # 2.3 Print Info #
@@ -134,6 +136,8 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
         # 2.4 Save model parameters #
         ################################################################
         if ((epoch + 1) % params.save_step == 0):
+            fin_acc = eval_src(tgt_encoder,src_classifier,tgt_data_loader_val)
+            tb_logger.add_scalars('Tgt Encoder Accuracy', {'Accuracy' : fin_acc},global_step=epoch)
             torch.save(discriminator.state_dict(), os.path.join(
                 params.model_root,
                 "discriminator-{}.pt".format(epoch + 1)))

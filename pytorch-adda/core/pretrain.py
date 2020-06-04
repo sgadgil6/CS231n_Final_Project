@@ -209,3 +209,4 @@ def eval_src(encoder, classifier, val_loader):
     val_acc_top1 = val_acc_top1 / len(val_loader.dataset)
     val_acc_top5 = val_acc_top5 / len(val_loader.dataset)
     print("Avg Val Loss = {}, Avg top1 val Accuracy = {:2%}, avg top val accuracy = {:2%}".format(val_loss, val_acc_top1,val_acc_top5))
+    return val_acc_top5

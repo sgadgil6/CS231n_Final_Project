@@ -20,17 +20,17 @@ src_model_trained = True
 # params for target dataset
 tgt_dataset = "Dollarstreet" #"USPS"
 # tgt_encoder_restore = None
-tgt_encoder_restore = "snapshots/tgt-encoder-26.pt"
+tgt_encoder_restore = "snapshots/tgt-encoder-36.pt"
 tgt_model_trained = True
 
 # params for setting up models
 model_root = "snapshots"
 d_input_dims = 512
-d_hidden_dims = 500
+d_hidden_dims = 512
 d_output_dims = 2
-d_model_restore = "snapshots/discriminator-26.pt"
-srcenc_name = "vgg16"
-tgtenc_name = "vgg16"
+d_model_restore = "snapshots/discriminator-36.pt"
+srcenc_name = "resnet18"
+tgtenc_name = "resnet18"
 # params for training network
 num_gpu = 5
 num_epochs_pre = 40 #100
@@ -39,7 +39,7 @@ eval_step_pre = 1 #1000
 save_step_pre = 500
 
 num_epochs = 150 #2000
-log_step = 20
+log_step = 10
 save_step = 2
 manual_seed = 42
 
