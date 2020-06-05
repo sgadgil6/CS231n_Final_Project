@@ -18,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device {}".format(device))
 BATCH_SIZE = 128
 checkpoint_pth = "/home/groups/kpohl/CS231n_data/imagenet/models/resnet_best_model_imagenet.pth"
-
+metadata_with_income = np.load(os.path.join(SAVE_DATA_DIR, 'metadata_with_income.pkl'))
 
 # Class to create read imagenet images
 class ImageFolderWithImageName(datasets.ImageFolder):
@@ -151,12 +151,16 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
                 x_train[i] = image_transforms['train'](x_train[i])
             x_train = x_train.to(device)
             y_train = y_train.to(device)
-
+            income = metadata_with_income[metadata_with_income[0].isn(img_ids_train)][7].values # get incomes
+            income = income.float()
             labels = y_train
             optimizer.zero_grad()
             output = model(x_train)
             labels = labels.long()
             loss = criterion(output, labels)
+            loss /= income #reweighting the loss by income
+            loss*=income.mean() #multiplying by average income too
+            loss = loss.sum()
             loss.backward()
             optimizer.step()
 
@@ -224,8 +228,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
         # If we get better val accuracy, save the labels for analysis, and save the model
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(SAVE_DATA_DIR, "correct_labels_top5_imagenet.npy"), correct_labels_top5)
-            np.save(os.path.join(SAVE_DATA_DIR, "incorrect_labels_top5_imagenet.npy"), incorrect_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "correct_labels_top5_imagenet_income.npy"), correct_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "incorrect_labels_top5_imagenet_income.npy"), incorrect_labels_top5)
             np.save(os.path.join(SAVE_DATA_DIR, "img_ids_imagenet.npy"), img_ids_val_list)
             torch.save(model.state_dict(), checkpoint_pth)
 
@@ -240,7 +244,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
                                                  val_acc_top5))
 
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
-        np.save(os.path.join(DATA_DIR, "history_imagenet.npy"), history)
+        np.save(os.path.join(DATA_DIR, "history_imagenet_income.npy"), history)
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 
 
