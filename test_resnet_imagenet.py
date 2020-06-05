@@ -2,41 +2,36 @@ import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils, models
+from torch.utils.data import Dataset, DataLoader, random_split
+from torchvision import transforms, utils, models, datasets
 import torch.nn as nn
 from torch import optim, cuda
 import os
 from torchsummary import summary
 from tqdm import tqdm
 
-DATA_DIR = "./data"
+DATA_DIR = '/home/groups/kpohl/CS231n_data/imagenet/imagenet_images'
+SAVE_DATA_DIR = './data/imagenet'
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device('cpu')
 print("Using device {}".format(device))
 BATCH_SIZE = 128
-checkpoint_pth = "./models/resnet_best_model.pth"
+checkpoint_pth = "/home/groups/kpohl/CS231n_data/imagenet/models/resnet_best_model_imagenet.pth"
 
 
-# Class to create train/test dataset to be fed into Dataloader
-class DollarStreetDataset(Dataset):
-    def __init__(self, data, targets, image_transform=None):
-        self.data = data
-        self.targets = targets
-        self.image_transform = image_transform
+# Class to create read imagenet images
+class ImageFolderWithImageName(datasets.ImageFolder):
+    """
+    Dataset which returns tuple (img, target, img_id)
+    """
 
     def __getitem__(self, index):
-        x = self.data[index]
-        y = self.targets[index]
+        sample, target = super(ImageFolderWithImageName, self).__getitem__(index)
+        path = self.imgs[index][0]
+        # print(path.split('/')[-1][:-4])
 
-        if self.image_transform:
-            # Color channel should be the first dimension
-            x = self.image_transform(x)
-
-        return x, torch.from_numpy(y)
-
-    def __len__(self):
-        return self.data.shape[0]
+        return sample, target, path.split('/')[-1][:-4]
 
 
 # Data Augmentation
@@ -93,10 +88,10 @@ def get_pretrianed_model(model_name, num_classes):
         
         n_inputs = model.fc.in_features
 
-        model.fc = nn.Sequential(nn.Linear(n_inputs, 256),
+        model.fc = nn.Sequential(nn.Linear(n_inputs, 512),
                                             nn.ReLU(),
-                                            nn.Dropout(0.3),
-                                            nn.Linear(256, num_classes),
+                                            # nn.Dropout(0.3),
+                                            nn.Linear(512, num_classes),
                                             nn.LogSoftmax(dim=1))
         model = model.to(device)
     else:
@@ -104,26 +99,17 @@ def get_pretrianed_model(model_name, num_classes):
 
     return model
 
-
-image_data_path = os.path.join(DATA_DIR, "image_data.npy")
-label_geo_path = os.path.join(DATA_DIR, "label_geo_data.npy")
-label_dict_path = os.path.join(DATA_DIR, "label_dict.npy")
-
-print("Loading Data and Labels")
-image_data = np.load(image_data_path)
-label_geo_data = np.load(label_geo_path)
-label_dict = np.load(label_dict_path, allow_pickle=True)
-print("Data Loaded!")
-
-X_train, X_test, y_train, y_test = train_test_split(image_data, label_geo_data, test_size=0.1)
-train_dataset = DollarStreetDataset(X_train, y_train, image_transform=image_transforms['train'])
-test_dataset = DollarStreetDataset(X_test, y_test, image_transform=image_transforms['test'])
+dataset = ImageFolderWithImageName(DATA_DIR, transform=transforms.Compose([transforms.ToTensor()]))
+# print(dataset.classes)
+train_dataset, test_dataset = random_split(dataset, lengths=[45000, len(dataset) - 45000])
 
 dataloaders = {"train": DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True),
                "test": DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)}
 
-vgg16_model = get_pretrianed_model('vgg_16', len(label_dict.item().keys()))
-resnet_model = get_pretrianed_model('resnet18', len(label_dict.item().keys()))
+print(len(dataset.classes))
+# ImageNet has 596 labels
+vgg16_model = get_pretrianed_model('vgg_16', len(dataset.classes))
+resnet_model = get_pretrianed_model('resnet18', len(dataset.classes))
 # print(summary(vgg16_model, input_size=(3, 224, 224), batch_size=BATCH_SIZE))
 print("Size of Train Set = {}".format(len(dataloaders['train'].dataset)))
 print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
@@ -132,7 +118,7 @@ criterion = nn.NLLLoss()
 optimizer = optim.Adam(resnet_model.parameters())
 
 
-def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, print_every=2):
+def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, print_every=1):
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
     history = []
@@ -154,13 +140,19 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
         incorrect_labels_top1 = []
         correct_labels_top5 = []
         incorrect_labels_top5 = []
+        img_ids_val_list = []
         # Training
         print("Training Epoch {}".format(epoch))
-        for x_train, y_train in tqdm(train_loader):
+        for x_train, y_train, img_ids_train in tqdm(train_loader):
+            # print(x_train.shape)
+            # print(y_train.shape)
+            # print(len(img_ids_train))
+            for i in range(x_train.shape[0]):
+                x_train[i] = image_transforms['train'](x_train[i])
             x_train = x_train.to(device)
             y_train = y_train.to(device)
 
-            labels = y_train[:, 0]
+            labels = y_train
             optimizer.zero_grad()
             output = model(x_train)
             labels = labels.long()
@@ -185,11 +177,14 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
             model.eval()
 
             print("Validating Epoch {}".format(epoch))
-            for x_val, y_val in val_loader:
+            for x_val, y_val, img_ids_val in tqdm(val_loader):
+                for i in range(x_val.shape[0]):
+                    x_val[i] = image_transforms['test'](x_val[i])
+                
                 x_val = x_val.to(device)
                 y_val = y_val.to(device)
 
-                labels = y_val[:, 0]
+                labels = y_val
                 output = model(x_val)
                 labels = labels.long()
                 loss = criterion(output, labels)
@@ -199,17 +194,18 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
 
                 y_val = y_val.cpu().detach().numpy()
                 for i in range(x_val.shape[0]):
+                    # img_ids_val_list.append(img_ids_val[i])
                     if labels[i] in pred_top5[i]:
                         val_acc_top5 += 1
-                        correct_labels_top5.append(y_val[i])
+                        correct_labels_top5.append([y_val[i], img_ids_val[i]])
                         if labels[i] == pred_top5[i, 0]:
                             val_acc_top1 += 1
-                            correct_labels_top1.append(y_val[i])
+                            correct_labels_top1.append([y_val[i], img_ids_val[i]])
                         else:
-                            incorrect_labels_top1.append(y_val[i])
+                            incorrect_labels_top1.append([y_val[i], img_ids_val[i]])
                     else:
-                        incorrect_labels_top1.append(y_val[i])
-                        incorrect_labels_top5.append(y_val[i])
+                        incorrect_labels_top1.append([y_val[i], img_ids_val[i]])
+                        incorrect_labels_top5.append([y_val[i], img_ids_val[i]])
 
             if was_training: #back to training
                 model.train()
@@ -228,8 +224,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
         # If we get better val accuracy, save the labels for analysis, and save the model
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(DATA_DIR, "correct_labels_top5.npy"), correct_labels_top5)
-            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5.npy"), incorrect_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "correct_labels_top5_imagenet.npy"), correct_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "incorrect_labels_top5_imagenet.npy"), incorrect_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "img_ids_imagenet.npy"), img_ids_val_list)
             torch.save(model.state_dict(), checkpoint_pth)
 
         if (epoch + 1) % print_every == 0:
