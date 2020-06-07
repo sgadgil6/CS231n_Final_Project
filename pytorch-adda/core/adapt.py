@@ -36,12 +36,12 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
     criterion = nn.CrossEntropyLoss()
     # criterion = nn.BCELoss()
     optimizer_tgt = optim.Adam(tgt_encoder.parameters(),
-                               # lr=params.c_learning_rate,
-                               lr=1.0,
+                               lr=params.c_learning_rate,
+                               # lr=1.0,
                                betas=(params.beta1, params.beta2))
     optimizer_discriminator = optim.Adam(discriminator.parameters(),
-                                  # lr=params.d_learning_rate,
-                                  lr=1.0,
+                                  lr=params.d_learning_rate,
+                                  # lr=1.0,
                                   betas=(params.beta1, params.beta2))
     len_data_loader = min(len(src_data_loader), len(tgt_data_loader))
     print("[adapt.py] INFO | Length of data loader: ",len_data_loader)
@@ -74,19 +74,28 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
             label_src = make_variable(torch.ones(feat_src.size(0)).long())
             label_tgt = make_variable(torch.zeros(feat_tgt.size(0)).long())
             label_concat = torch.cat((label_src, label_tgt), 0)
-
             # predict on discriminator
-            pred_concat = discriminator(feat_concat).squeeze(1)
+            pred_src = discriminator(feat_src).squeeze(1)
 
             # compute loss for discriminator
-            loss_discriminator = criterion(pred_concat, label_concat)
-            loss_discriminator.backward()
+            loss_discriminator_real = criterion(pred_src, label_src)
+            loss_discriminator_real.backward()
+
+            # predict on discriminator
+            pred_tgt = discriminator(feat_tgt).squeeze(1)
+
+            # compute loss for discriminator
+            loss_discriminator_fake = criterion(pred_tgt, label_tgt)
+            loss_discriminator_fake.backward()
 
             # optimize discriminator
             optimizer_discriminator.step()
-
-            pred_cls = torch.squeeze(pred_concat.max(1)[1])
-            acc = (pred_cls == label_concat).float().mean()
+            # print(pred_src.shape)
+            # print(pred_tgt.shape)
+            # print(label_concat.shape)
+            pred_cls_src = torch.squeeze(pred_src.max(1)[1])
+            pred_cls_tgt = torch.squeeze(pred_tgt.max(1)[1])
+            acc = (torch.cat((pred_cls_src,pred_cls_tgt),0) == label_concat).float().mean()
 
             #########################################################
             # 2.2 Train Generator == Target Encoder #
@@ -115,7 +124,7 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
 
             # optimize target encoder
             optimizer_tgt.step()
-            tb_logger.add_scalars('Adverserial Loss', {'Generator Loss' : loss_tgt.item(), 'Discriminator Loss': loss_discriminator.item()},global_step=step_)
+            tb_logger.add_scalars('Adverserial Loss', {'Generator Loss' : loss_tgt.item(), 'Discriminator Loss Real': loss_discriminator_real.item(), 'Discriminator Loss Fake': loss_discriminator_fake.item()},global_step=step_)
             tb_logger.add_scalars('Discriminator Accuracy', {'Disc Accuracy' : acc.item()},global_step=step_)
 
             ###########################################################
@@ -123,12 +132,13 @@ def train_tgt(src_encoder, tgt_encoder, discriminator,
             ###########################################################
             if ((step + 1) % params.log_step == 0):
                 print("Epoch [{}/{}] Step [{}/{}]:"
-                      "d_loss={:.5f} g_loss={:.5f} acc={:.5f}"
+                        "d_loss_real={:.5f}  d_loss_fake={:.5f} g_loss={:.5f} acc={:.5f}"
                       .format(epoch + 1,
                               params.num_epochs,
                               step + 1,
                               len_data_loader,
-                              loss_discriminator.item(),
+                              loss_discriminator_real.item(),
+                              loss_discriminator_fake.item(),
                               loss_tgt.item(),
                               acc.item()))
 
