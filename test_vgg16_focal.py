@@ -140,13 +140,15 @@ print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 # criterion = nn.NLLLoss()
 criterion = nn.CrossEntropyLoss(reduction='none')
 
-optimizer = optim.Adam(vgg16_model.parameters())
+# optimizer = optim.Adam(vgg16_model.parameters())
 
-# optimizer = optim.Adam(resnet_model.parameters())
+print('Resnet Model')
+optimizer = optim.Adam(resnet_model.parameters())
 
 def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, print_every=2):
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
+    corr_max_train_acc_top5 = float('-inf') #best train acc corresponding to best val acc
     gamma = 7 #finetune this
     history = []
     model.train()
@@ -265,7 +267,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
 
         # If we get better val accuracy, save the labels for analysis
         if val_acc_top5 > max_val_acc_top5:
+            print('Best val acc changed')
             max_val_acc_top5 = val_acc_top5
+            corr_max_train_acc_top5 = train_acc_top5
             np.save(os.path.join(DATA_DIR, "correct_labels_top5_focal_vgg_7.npy"), correct_labels_top5)
             np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_focal_vgg_7.npy"), incorrect_labels_top5)
 
@@ -282,16 +286,19 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
         np.save(os.path.join(DATA_DIR, "history_focal_vgg_7.npy"), history)
 
+    print('Training done!')
+    print('Best val acc top5: %0.4f, corresponding best train acc top5: %0.4f' % (max_val_acc_top5, corr_max_train_acc_top5))
+
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 
 
-history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(vgg16_model,
-                                                                                                        criterion,
-                                                                                                        optimizer,
-                                                                                                        dataloaders[
-                                                                                                            'train'],
-                                                                                                        dataloaders[
-                                                                                                            'test'])
+# history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(vgg16_model,
+#                                                                                                         criterion,
+#                                                                                                         optimizer,
+#                                                                                                         dataloaders[
+#                                                                                                             'train'],
+#                                                                                                         dataloaders[
+#                                                                                                             'test'])
 
 # resnet model
-# history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(resnet_model, criterion, optimizer, dataloaders['train'], dataloaders['test'])
+history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5 = train(resnet_model, criterion, optimizer, dataloaders['train'], dataloaders['test'])
