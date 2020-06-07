@@ -9,29 +9,36 @@ from torch import optim, cuda
 import os
 from torchsummary import summary
 from tqdm import tqdm
+import pandas as pd
 
-DATA_DIR = '/home/groups/kpohl/CS231n_data/imagenet/imagenet_images'
+DATA_DIR = './data/imagenet/imagenet_images'
 SAVE_DATA_DIR = './data/imagenet'
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device('cpu')
 print("Using device {}".format(device))
 BATCH_SIZE = 128
-checkpoint_pth = "/home/groups/kpohl/CS231n_data/imagenet/models/resnet_best_model_imagenet.pth"
-
+checkpoint_pth = "./data/imagenet/models/resnet_best_model_imagenet.pth"
+metadata_with_income = pd.read_pickle(os.path.join(SAVE_DATA_DIR, 'metadata_with_income.pkl'))
+metadata_with_income = metadata_with_income.drop_duplicates()
 
 # Class to create read imagenet images
-class ImageFolderWithImageName(datasets.ImageFolder):
+class ImageFolderWithImageNameAndIncome(datasets.ImageFolder):
     """
     Dataset which returns tuple (img, target, img_id)
     """
 
     def __getitem__(self, index):
-        sample, target = super(ImageFolderWithImageName, self).__getitem__(index)
+        sample, target = super(ImageFolderWithImageNameAndIncome, self).__getitem__(index)
         path = self.imgs[index][0]
         # print(path.split('/')[-1][:-4])
-
-        return sample, target, path.split('/')[-1][:-4]
+        img_id = int(path.split('/')[-1][:-4])
+        # print(img_id)
+        if metadata_with_income[metadata_with_income[0] == img_id][7].isnull().item():
+            return None
+        else:
+            # print(metadata_with_income[metadata_with_income[0] == img_id][7])
+            return sample, target, path.split('/')[-1][:-4], metadata_with_income[metadata_with_income[0] == img_id][7].item()
 
 
 # Data Augmentation
@@ -66,6 +73,11 @@ image_transforms = {
         ]),
 }
 
+# Function to filter images which have no income information associated
+def my_collate(batch):
+    batch = list(filter(lambda x:x is not None, batch))
+    return torch.utils.data.dataloader.default_collate(batch)
+
 
 def get_pretrianed_model(model_name, num_classes):
     if model_name == 'vgg_16':
@@ -99,12 +111,12 @@ def get_pretrianed_model(model_name, num_classes):
 
     return model
 
-dataset = ImageFolderWithImageName(DATA_DIR, transform=transforms.Compose([transforms.ToTensor()]))
+dataset = ImageFolderWithImageNameAndIncome(DATA_DIR, transform=transforms.Compose([transforms.ToTensor()]))
 # print(dataset.classes)
 train_dataset, test_dataset = random_split(dataset, lengths=[45000, len(dataset) - 45000])
 
-dataloaders = {"train": DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True),
-               "test": DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)}
+dataloaders = {"train": DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=my_collate),
+               "test": DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=my_collate)}
 
 print(len(dataset.classes))
 # ImageNet has 596 labels
@@ -114,7 +126,7 @@ resnet_model = get_pretrianed_model('resnet18', len(dataset.classes))
 print("Size of Train Set = {}".format(len(dataloaders['train'].dataset)))
 print("Size of Test Set = {}".format(len(dataloaders['test'].dataset)))
 
-criterion = nn.NLLLoss()
+criterion = nn.CrossEntropyLoss(reduction='none')
 optimizer = optim.Adam(resnet_model.parameters())
 
 
@@ -143,7 +155,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
         img_ids_val_list = []
         # Training
         print("Training Epoch {}".format(epoch))
-        for x_train, y_train, img_ids_train in tqdm(train_loader):
+        for x_train, y_train, img_ids_train, income in tqdm(train_loader):
             # print(x_train.shape)
             # print(y_train.shape)
             # print(len(img_ids_train))
@@ -151,16 +163,30 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
                 x_train[i] = image_transforms['train'](x_train[i])
             x_train = x_train.to(device)
             y_train = y_train.to(device)
-
+            income = income.to(device)
+            
+            # income = metadata_with_income[metadata_with_income[0].isin(img_ids_train)][7].values # get incomes
+            # income = income.float()
+            # print(income)
+            # income = torch.from_numpy(income).to(device)
             labels = y_train
             optimizer.zero_grad()
             output = model(x_train)
             labels = labels.long()
             loss = criterion(output, labels)
+            # print(loss.shape)
+            loss /= income #reweighting the loss by income
+            # print(income)
+            loss*=income.mean() #multiplying by average income too
+            
+            # print(loss)
+            loss = loss.sum()
+            # print(loss)
             loss.backward()
             optimizer.step()
 
-            train_loss += loss.item() * x_train.size(0)
+            train_loss += loss.item()
+            # print(train_loss)
 
             _, pred_top5 = output.topk(k=5, dim=1)
             pred_top5 = pred_top5.t()
@@ -177,18 +203,20 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
             model.eval()
 
             print("Validating Epoch {}".format(epoch))
-            for x_val, y_val, img_ids_val in tqdm(val_loader):
+            for x_val, y_val, img_ids_val, income in tqdm(val_loader):
                 for i in range(x_val.shape[0]):
                     x_val[i] = image_transforms['test'](x_val[i])
                 
                 x_val = x_val.to(device)
                 y_val = y_val.to(device)
+                income = income.to(device)
 
                 labels = y_val
                 output = model(x_val)
                 labels = labels.long()
                 loss = criterion(output, labels)
-                val_loss += loss.item() * x_val.size(0)
+                loss = loss.sum()
+                val_loss += loss.item()
 
                 _, pred_top5 = output.topk(k=5, dim=1)
 
@@ -224,8 +252,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
         # If we get better val accuracy, save the labels for analysis, and save the model
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(SAVE_DATA_DIR, "correct_labels_top5_imagenet.npy"), correct_labels_top5)
-            np.save(os.path.join(SAVE_DATA_DIR, "incorrect_labels_top5_imagenet.npy"), incorrect_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "correct_labels_top5_imagenet_income.npy"), correct_labels_top5)
+            np.save(os.path.join(SAVE_DATA_DIR, "incorrect_labels_top5_imagenet_income.npy"), incorrect_labels_top5)
             np.save(os.path.join(SAVE_DATA_DIR, "img_ids_imagenet.npy"), img_ids_val_list)
             torch.save(model.state_dict(), checkpoint_pth)
 
@@ -240,7 +268,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=50, pr
                                                  val_acc_top5))
 
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
-        np.save(os.path.join(DATA_DIR, "history_imagenet.npy"), history)
+        np.save(os.path.join(DATA_DIR, "history_imagenet_income.npy"), history)
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 
 
