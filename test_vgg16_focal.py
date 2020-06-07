@@ -147,7 +147,7 @@ optimizer = optim.Adam(vgg16_model.parameters())
 def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, print_every=2):
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
-    gamma = 5 #finetune this
+    gamma = 7 #finetune this
     history = []
     model.train()
     correct_labels_top1 = []
@@ -156,7 +156,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     incorrect_labels_top5 = []
     model.optimizer = optimizer
 
-    print('Focal Loss implementation')
+    print('Focal Loss implementation, gamma = 7')
 
     for epoch in range(n_epochs):
 
@@ -266,8 +266,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
         # If we get better val accuracy, save the labels for analysis
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(DATA_DIR, "correct_labels_top5_focal_vgg_5.npy"), correct_labels_top5)
-            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_focal_vgg_5.npy"), incorrect_labels_top5)
+            np.save(os.path.join(DATA_DIR, "correct_labels_top5_focal_vgg_7.npy"), correct_labels_top5)
+            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_focal_vgg_7.npy"), incorrect_labels_top5)
 
         if (epoch + 1) % print_every == 0:
             print(
@@ -280,7 +280,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                                                      val_acc_top5))
 
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
-        np.save(os.path.join(DATA_DIR, "history_focal_vgg_5.npy"), history)
+        np.save(os.path.join(DATA_DIR, "history_focal_vgg_7.npy"), history)
 
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 
