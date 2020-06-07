@@ -147,7 +147,7 @@ optimizer = optim.Adam(vgg16_model.parameters())
 def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, print_every=2):
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
-    gamma = 2 #finetune this
+    gamma = 5 #finetune this
     history = []
     model.train()
     correct_labels_top1 = []
@@ -198,7 +198,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
             loss.backward()
             optimizer.step()
 
-            train_loss += loss.item() * x_train.size(0)
+            # train_loss += loss.item() * x_train.size(0)
+            train_loss += loss.item()
+
 
             _, pred_top5 = output.topk(k=5, dim=1)
             pred_top5 = pred_top5.t()
@@ -227,7 +229,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                 loss = criterion(output, labels)  # shape (N)
                 loss = loss.sum()
 
-                val_loss += loss.item() * x_val.size(0)
+                # val_loss += loss.item() * x_val.size(0)
+                val_loss += loss.item()
+
 
                 _, pred_top5 = output.topk(k=5, dim=1)
 
@@ -262,8 +266,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
         # If we get better val accuracy, save the labels for analysis
         if val_acc_top5 > max_val_acc_top5:
             max_val_acc_top5 = val_acc_top5
-            np.save(os.path.join(DATA_DIR, "correct_labels_top5_focal_vgg.npy"), correct_labels_top5)
-            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_focal_vgg.npy"), incorrect_labels_top5)
+            np.save(os.path.join(DATA_DIR, "correct_labels_top5_focal_vgg_5.npy"), correct_labels_top5)
+            np.save(os.path.join(DATA_DIR, "incorrect_labels_top5_focal_vgg_5.npy"), incorrect_labels_top5)
 
         if (epoch + 1) % print_every == 0:
             print(
@@ -276,7 +280,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                                                      val_acc_top5))
 
         history.append([train_loss, val_loss, train_acc_top1, val_acc_top1, train_acc_top5, val_acc_top5])
-        np.save(os.path.join(DATA_DIR, "history_focal_vgg.npy"), history)
+        np.save(os.path.join(DATA_DIR, "history_focal_vgg_5.npy"), history)
 
     return history, correct_labels_top1, correct_labels_top5, incorrect_labels_top1, incorrect_labels_top5
 

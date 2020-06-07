@@ -195,7 +195,9 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
             loss.backward()
             optimizer.step()
 
-            train_loss += loss.item() * x_train.size(0)
+            # train_loss += loss.item() * x_train.size(0)
+            train_loss += loss.item()
+
 
             _, pred_top5 = output.topk(k=5, dim=1)
             pred_top5 = pred_top5.t()
@@ -224,7 +226,8 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
                 loss = criterion(output, labels)  # shape (N)
                 loss = loss.sum()
 
-                val_loss += loss.item() * x_val.size(0)
+                # val_loss += loss.item() * x_val.size(0)
+                val_loss += loss.item()
 
                 _, pred_top5 = output.topk(k=5, dim=1)
 
