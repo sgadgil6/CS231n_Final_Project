@@ -158,7 +158,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     incorrect_labels_top5 = []
     model.optimizer = optimizer
 
-    print('Focal Loss implementation, resnet, gamma = 2')
+    print('Focal Loss implementation, resnet, gamma = 5')
 
     for epoch in range(n_epochs):
 
