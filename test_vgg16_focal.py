@@ -149,7 +149,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
     corr_max_train_acc_top5 = float('-inf') #best train acc corresponding to best val acc
-    gamma = 2 #finetune this
+    gamma = 5 #finetune this
     history = []
     model.train()
     correct_labels_top1 = []
