@@ -149,7 +149,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     max_train_acc = 0
     max_val_acc_top5 = float('-inf')
     corr_max_train_acc_top5 = float('-inf') #best train acc corresponding to best val acc
-    gamma = 5 #finetune this
+    gamma = 7 #finetune this
     history = []
     model.train()
     correct_labels_top1 = []
@@ -158,7 +158,7 @@ def train(model, criterion, optimizer, train_loader, val_loader, n_epochs=40, pr
     incorrect_labels_top5 = []
     model.optimizer = optimizer
 
-    print('Focal Loss implementation, resnet, gamma = 5')
+    print('Focal Loss implementation, resnet, gamma = 7')
 
     for epoch in range(n_epochs):
 
