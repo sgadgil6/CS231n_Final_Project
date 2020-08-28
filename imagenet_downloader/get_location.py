@@ -1,7 +1,7 @@
 import urllib.request, urllib.parse, urllib.error
 import json
 
-FLICKR_API_KEY = "35ef866d3c3fc634ac3dd7ca216cee3b"  # obtained from Flickr after getting a license
+FLICKR_API_KEY = "<INSERT API KEY>"  # obtained from Flickr after getting a license
 
 FLICKR_API_BASE_URL = (
         "https://api.flickr.com/services/rest/?api_key=%s&format=json&nojsoncallback=1"
